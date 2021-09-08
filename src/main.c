@@ -7,8 +7,6 @@
 
 #ifdef _WIN32
   #include <windows.h>
-  #include "SDL_syswm.h"
-  #include <dwmapi.h>
 #elif __linux__
   #include <unistd.h>
   #include <signal.h>
@@ -28,16 +26,6 @@ static double get_scale(void) {
   return dpi / 96.0;
 #endif
 }
-
-#ifdef _WIN32
-static HWND GetWindowHandle(SDL_Window* window){
-    SDL_SysWMinfo sysInfo;
-
-    SDL_VERSION(&sysInfo.version);
-    SDL_GetWindowWMInfo(window, &sysInfo);
-    return sysInfo.info.win.window;
-}
-#endif
 
 
 static void get_exe_filename(char *buf, int sz) {
@@ -123,13 +111,6 @@ int main(int argc, char **argv) {
   window = SDL_CreateWindow(
     "", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, dm.w * 0.8, dm.h * 0.8,
     SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_HIDDEN);
-#ifdef _WIN32
-   HWND handle = GetWindowHandle(window);
-   int mode = api_windows_dark_theme_activated();
-
-   if (DwmSetWindowAttribute(handle, WINDOWS_DARK_MODE_BEFORE_20H1, &mode, 4) != 0)
-     DwmSetWindowAttribute(handle, WINDOWS_DARK_MODE, &mode, 4);
-#endif
   init_window_icon();
   ren_init(window);
 

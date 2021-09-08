@@ -13,10 +13,31 @@
   #include <fileapi.h>
   #include "SDL_syswm.h"
   #include <dwmapi.h>
+  #define WINDOWS_DARK_MODE_BEFORE_20H1 19
+  #define WINDOWS_DARK_MODE 20
 #endif
 
 extern SDL_Window *window;
 
+#ifdef _WIN32
+static int api_windows_dark_theme_activated()
+ {
+     DWORD   type;
+     DWORD   value;
+     DWORD   count = 4;
+     LSTATUS st = RegGetValue(
+         HKEY_CURRENT_USER,
+         TEXT("Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize"),
+         TEXT("AppsUseLightTheme"),
+         RRF_RT_REG_DWORD,
+         &type,
+         &value,
+         &count );
+     if ( st == ERROR_SUCCESS && type == REG_DWORD )
+         return value == 0? 1 : 0;
+     return 0;
+ }
+#endif
 
 static const char* button_name(int button) {
   switch (button) {
@@ -116,7 +137,8 @@ top:
       
 #ifdef _WIN32
      case SDL_SYSWMEVENT:      
-       if (e.syswm.msg->msg.win.msg == WM_SETTINGCHANGE) {
+       if (e.syswm.msg->msg.win.msg == WM_SETTINGCHANGE || 
+            e.syswm.msg->msg.win.msg == WM_CREATE) {
          HWND hwnd = e.syswm.msg->msg.win.hwnd;
          LPARAM lParam = e.syswm.msg->msg.win.lParam;
          if (lParam) {
@@ -129,9 +151,7 @@ top:
            if (current_dark_mode != current_immersive_mode) {
              if (DwmSetWindowAttribute(hwnd, WINDOWS_DARK_MODE_BEFORE_20H1, &current_dark_mode, 4) != 0)
                DwmSetWindowAttribute(hwnd, WINDOWS_DARK_MODE, &current_dark_mode, 4);
-
            }
-
          }
        }
        return 0;
