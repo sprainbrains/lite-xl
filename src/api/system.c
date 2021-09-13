@@ -135,24 +135,31 @@ top:
       return 1;
       
 #ifdef _WIN32
-     case SDL_SYSWMEVENT:   
+     case SDL_SYSWMEVENT:                                             
        if (e.syswm.msg->msg.win.msg == WM_SHOWWINDOW) {
-          HWND hwnd = e.syswm.msg->msg.win.hwnd;
-           
-          int current_dark_mode = api_windows_dark_theme_activated();
-
+         SDL_SysWMinfo sysInfo;
+         SDL_GetWindowWMInfo(window, &sysInfo);
+         //HWND hwnd = sysInfo.info.win.window;
+         HWND hwnd = e.syswm.msg->msg.win.hwnd;
+         int current_dark_mode = api_windows_dark_theme_activated();
            // if (current_dark_mode != current_immersive_mode) {
-             if (DwmSetWindowAttribute(hwnd, WINDOWS_DARK_MODE_BEFORE_20H1, &current_dark_mode, 4) != 0)
-               DwmSetWindowAttribute(hwnd, WINDOWS_DARK_MODE, &current_dark_mode, 4);
+         if (DwmSetWindowAttribute(hwnd, WINDOWS_DARK_MODE_BEFORE_20H1, &current_dark_mode, 4) != 0)
+           DwmSetWindowAttribute(hwnd, WINDOWS_DARK_MODE, &current_dark_mode, 4);
+
+          // rencache_invalidate();
+          // lua_pushstring(L, "exposed");
+          // return 1;
+          // SDL_Renderser * render = SDL_GetRenderer(window);
+          // SDL_Surface * surface = SDL_GetWindowSurface(window);
+          // SDL_Texture * texture = SDL_CreateTextureFromSurface(render, surface);
+          // SDL_RenderCopy(render, texture, NULL, NULL);
+          // SDL_RenderPresent(render);
+          // UpdateWindow(hwnd);
+          //SDL_UpdateWindowSurface(window);
+          ren_init(window);
        }
                   
        if (e.syswm.msg->msg.win.msg == WM_SETTINGCHANGE) {
-                   char out [10];
-           sprintf(out, "WindowsId = %d", e.window.windowID);
-           SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING,
-                                    "Test",
-                                    out,
-                                    NULL);
          // SDL_Window* win = SDL_GetWindowFromID(e.window.windowID);
          // SDL_SysWMinfo sysInfo;
          // SDL_GetWindowWMInfo(win, &sysInfo);
@@ -172,36 +179,10 @@ top:
            // }
          // }
        }
-       return 0;
-       
-
+       // return 0;
  #endif
     case SDL_WINDOWEVENT:
-#ifdef _WIN32
-      if (e.window.event == SDL_WINDOWEVENT_SHOWN) {
-        int current_dark_mode = api_windows_dark_theme_activated();
-        char out[10];
-        // sprintf(out, "current mode = %d, windowID = %d", current_dark_mode, e.window.windowID);
-        // SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING,
-        //                  "Test",
-        //                  out,
-        //                  NULL);
-        SDL_Window* win = SDL_GetWindowFromID(e.window.windowID);
-        //SDL_MinimizeWindow(win);
-        //SDL_RestoreWindow(win);
-        //SDL_HideWindow(win);
-        //SDL_ShowWindow(win);
-       // SDL_RaiseWindow(win);
-       //DL_UpdateWindowSurface(win);
-      }
-      return 3;
-#endif
-
       if (e.window.event == SDL_WINDOWEVENT_RESIZED) {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING,
-                "Test",
-                "resize",
-                NULL);
         ren_resize_window();
         lua_pushstring(L, "resized");
         /* The size below will be in points. */
@@ -224,7 +205,7 @@ top:
       }
       if (e.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
         lua_pushstring(L, "focuslost");
-        return 1;
+        return 0;
       }
       /* on some systems, when alt-tabbing to the window SDL will queue up
       ** several KEYDOWN events for the `tab` key; we flush all keydown
