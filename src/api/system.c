@@ -205,7 +205,7 @@ top:
       }
       if (e.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
         lua_pushstring(L, "focuslost");
-        return 0;
+        return 1;
       }
       /* on some systems, when alt-tabbing to the window SDL will queue up
       ** several KEYDOWN events for the `tab` key; we flush all keydown
