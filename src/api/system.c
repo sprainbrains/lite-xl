@@ -103,6 +103,7 @@ top:
     return 0;
   }
 
+  SDL_UpdateWindowSurface(window);
   switch (e.type) {
     case SDL_QUIT:
       lua_pushstring(L, "quit");
