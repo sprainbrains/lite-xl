@@ -255,8 +255,8 @@ top:
       SDL_GetMouseState(&mx, &my);
       lua_pushstring(L, "filedropped");
       lua_pushstring(L, e.drop.file);
-      lua_pushinteger(L, mx);
-      lua_pushinteger(L, my);
+      lua_pushinteger(L, mx * window_renderer.scale_x);
+      lua_pushinteger(L, my * window_renderer.scale_y);
       SDL_free(e.drop.file);
       return 4;
 
@@ -313,8 +313,8 @@ top:
       if (e.button.button == 1) { SDL_CaptureMouse(1); }
       lua_pushstring(L, "mousepressed");
       lua_pushstring(L, button_name(e.button.button));
-      lua_pushinteger(L, e.button.x);
-      lua_pushinteger(L, e.button.y);
+      lua_pushinteger(L, e.button.x * window_renderer.scale_x);
+      lua_pushinteger(L, e.button.y * window_renderer.scale_y);
       lua_pushinteger(L, e.button.clicks);
       return 5;
 
@@ -322,8 +322,8 @@ top:
       if (e.button.button == 1) { SDL_CaptureMouse(0); }
       lua_pushstring(L, "mousereleased");
       lua_pushstring(L, button_name(e.button.button));
-      lua_pushinteger(L, e.button.x);
-      lua_pushinteger(L, e.button.y);
+      lua_pushinteger(L, e.button.x * window_renderer.scale_x);
+      lua_pushinteger(L, e.button.y * window_renderer.scale_y);
       return 4;
 
     case SDL_MOUSEMOTION:
@@ -335,10 +335,10 @@ top:
         e.motion.yrel += event_plus.motion.yrel;
       }
       lua_pushstring(L, "mousemoved");
-      lua_pushinteger(L, e.motion.x);
-      lua_pushinteger(L, e.motion.y);
-      lua_pushinteger(L, e.motion.xrel);
-      lua_pushinteger(L, e.motion.yrel);
+      lua_pushinteger(L, e.motion.x * window_renderer.scale_x);
+      lua_pushinteger(L, e.motion.y * window_renderer.scale_y);
+      lua_pushinteger(L, e.motion.xrel * window_renderer.scale_x);
+      lua_pushinteger(L, e.motion.yrel * window_renderer.scale_y);
       return 5;
 
     case SDL_MOUSEWHEEL:
@@ -416,6 +416,7 @@ static int f_wait_event(lua_State *L) {
   int nargs = lua_gettop(L);
   if (nargs >= 1) {
     double n = luaL_checknumber(L, 1);
+    if (n < 0) n = 0;
     lua_pushboolean(L, SDL_WaitEventTimeout(NULL, n * 1000));
   } else {
     lua_pushboolean(L, SDL_WaitEvent(NULL));
@@ -891,6 +892,7 @@ static int f_get_time(lua_State *L) {
 
 static int f_sleep(lua_State *L) {
   double n = luaL_checknumber(L, 1);
+  if (n < 0) n = 0;
   SDL_Delay(n * 1000);
   return 0;
 }
@@ -1086,7 +1088,7 @@ static int f_load_native_plugin(lua_State *L) {
 #endif
 
 /* Special purpose filepath compare function. Corresponds to the
-   order used in the TreeView view of the project's files. Returns true iff
+   order used in the TreeView view of the project's files. Returns true if
    path1 < path2 in the TreeView order. */
 static int f_path_compare(lua_State *L) {
   size_t len1, len2;
@@ -1100,7 +1102,6 @@ static int f_path_compare(lua_State *L) {
   size_t offset = 0, i, j;
   for (i = 0; i < len1 && i < len2; i++) {
     if (path1[i] != path2[i]) break;
-    if (isdigit(path1[i])) break;
     if (path1[i] == PATHSEP) {
       offset = i + 1;
     }
