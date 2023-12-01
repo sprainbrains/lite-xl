@@ -164,7 +164,11 @@ if not get_option('source-only')
 
     if host_machine.system() == 'windows'
         win_dep = cc.find_library('dwmapi', required : true)
+    else
+        win_dep = cc.find_library('dwmapi', required : false)
+    endif
 
+    if host_machine.system() == 'windows'
         if sdl_dep.type_name() == 'internal'
             sdlmain_dep = dependency('sdl2main', fallback: ['sdl2main_dep'])
         else
